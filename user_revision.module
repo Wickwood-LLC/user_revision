@@ -98,12 +98,17 @@ function _user_revision_access($u, $perm) {
       $access = user_access($permission) || $access;
     }
   }
-  $count = db_select('user_revision', 'ur')
-    ->condition('ur.uid', $u->uid)
-    ->countQuery()
-    ->execute()
-    ->fetchField();
-  return $access && ($count > 1);
+
+  // Hack it to show user revisions page always to make profile revisions
+  // visible. Otherwise, profile revisions page may not be shown if no
+  // user revisions exist.
+  //$count = db_select('user_revision', 'ur')
+  //  ->condition('ur.uid', $u->uid)
+  //  ->countQuery()
+  //  ->execute()
+  //  ->fetchField();
+  //return $access && ($count > 1);
+  return $access;
 }
 
 /**
