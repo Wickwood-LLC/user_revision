@@ -70,13 +70,14 @@ class UserController extends ControllerBase implements ContainerInjectionInterfa
    */
   public function revisionOverview(UserInterface $user) {
     $account = $this->currentUser();
-    $user_storage = $this->entityTypeManager->getStorage('user');
+    $user_storage = $this->entityTypeManager()->getStorage('user');
+    $access_check = new UserRevisionAccessCheck($this->entityTypeManager());
 
-    $build = array();
-    $build['#title'] = $this->t('Revisions for %title', array('%title' => $user->label()));
-    $header = array($this->t('Revision'), $this->t('Operations'));
+    $build = [];
+    $build['#title'] = $this->t('Revisions for %title', ['%title' => $user->label()]);
+    $header = [$this->t('Revision'), $this->t('Operations')];
 
-    $rows = array();
+    $rows = [];
 
     $vids = user_revision_ids($user);
 
@@ -95,7 +96,7 @@ class UserController extends ControllerBase implements ContainerInjectionInterfa
           $link = $user->toLink($date)->toString();
         }
         else {
-          $link = Link::fromTextAndUrl($date, new Url('entity.user.revision', array('user' => $user->id(), 'user_revision' => $vid)))->toString();
+          $link = Link::fromTextAndUrl($date, new Url('entity.user.revision', ['user' => $user->id(), 'user_revision' => $vid]))->toString();
         }
 
 
@@ -158,14 +159,14 @@ class UserController extends ControllerBase implements ContainerInjectionInterfa
       }
     }
 
-    $build['user_revisions_table'] = array(
+    $build['user_revisions_table'] = [
       '#theme' => 'table',
       '#rows' => $rows,
       '#header' => $header,
-      '#attached' => array(
-        'library' => array('user_revision/user.admin')
-      )
-    );
+      '#attached' => [
+        'library' => ['user_revision/user.admin'],
+      ],
+    ];
 
     return $build;
   }
@@ -185,12 +186,12 @@ class UserController extends ControllerBase implements ContainerInjectionInterfa
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   public function revisionShow($user, $user_revision) {
-    $user_history = $this->entityTypeManager->getStorage('user')->loadRevision($user_revision);
+    $user_history = $this->entityTypeManager()->getStorage('user')->loadRevision($user_revision);
     if ($user_history->id() != $user) {
-      throw new NotFoundHttpException;
+      throw new NotFoundHttpException();
     }
     /* @var $view_builder \Drupal\Core\Entity\EntityViewBuilder */
-    $view_builder = $this->entityTypeManager->getViewBuilder($user_history->getEntityTypeId());
+    $view_builder = $this->entityTypeManager()->getViewBuilder($user_history->getEntityTypeId());
     return $view_builder->view($user_history);
   }
 
@@ -208,8 +209,8 @@ class UserController extends ControllerBase implements ContainerInjectionInterfa
    * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   public function revisionPageTitle($user_revision) {
-    $user = $this->entityTypeManager->getStorage('user')->loadRevision($user_revision);
-    return $this->t('Revision of %title from %date', array('%title' => $user->label(), '%date' => $this->dateFormatter->format($user->get('revision_timestamp')->value)));
+    $user = $this->entityTypeManager()->getStorage('user')->loadRevision($user_revision);
+    return $this->t('Revision of %title from %date', ['%title' => $user->label(), '%date' => $this->dateFormatter->format($user->get('revision_timestamp')->value)]);
   }
 
 }

@@ -26,14 +26,7 @@ class UserRevisionAccessCheck implements AccessInterface {
    *
    * @var array
    */
-  protected $access = array();
-
-  /**
-   * Constructs a new UserRevisionAccessCheck.
-   *
-   * @param \Drupal\Core\Entity\EntityManagerInterface $entity_manager
-   *   The entity manager.
-   */
+  protected $access = [];
 
   /**
    * UserRevisionAccessCheck constructor.
@@ -77,28 +70,28 @@ class UserRevisionAccessCheck implements AccessInterface {
   /**
    * Checks user revision access.
    *
-   * @param \Drupal\node\NodeInterface $node
-   *   The node to check.
+   * @param \Drupal\user\UserInterface $user
+   *   The user to check.
    * @param \Drupal\Core\Session\AccountInterface $account
    *   A user object representing the user for whom the operation is to be
    *   performed.
    * @param string $op
-   *   (optional) The specific operation being checked. Defaults to 'view.'
+   *   (optional) The specific operation being checked. Defaults to 'view'.
    *
    * @return bool
    *   TRUE if the operation may be performed, FALSE otherwise.
    */
   public function checkAccess(UserInterface $user, AccountInterface $account, $op = 'view') {
-    $map = array(
+    $map = [
       'view' => 'view all user revisions',
       'update' => 'revert all user revisions',
       'delete' => 'delete all user revisions',
-    );
-    $own_map = array(
+    ];
+    $own_map = [
       'view' => 'view own user revisions',
       'update' => 'revert own user revisions',
       'delete' => 'delete own user revisions',
-    );
+    ];
 
     if (!$user || !isset($map[$op]) || !isset($own_map[$op])) {
       // If there was no user to check against, or the $op was not one of the
@@ -111,7 +104,7 @@ class UserRevisionAccessCheck implements AccessInterface {
       return FALSE;
     }
 
-    // Check minimal revisions count
+    // Check minimal revisions count.
     if (user_revision_count($user) < 2) {
       return FALSE;
     }

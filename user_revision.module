@@ -27,11 +27,11 @@ function user_revision_entity_type_alter(array &$entity_types) {
 }
 
 /**
- * Implements hook_entity_base_field_info() fore user entity.
+ * Implements hook_entity_base_field_info().
  */
 function user_revision_entity_base_field_info(EntityTypeInterface $entity_type) {
   if ($entity_type->id() == 'user') {
-    $fields = array();
+    $fields = [];
 
     $fields['vid'] = BaseFieldDefinition::create('integer')
       ->setLabel(t('Revision ID'))
@@ -55,13 +55,13 @@ function user_revision_entity_base_field_info(EntityTypeInterface $entity_type) 
       ->setDescription(t('Briefly describe the changes you have made.'))
       ->setRevisionable(TRUE)
       ->setTranslatable(TRUE)
-      ->setDisplayOptions('form', array(
-      'type' => 'string_textarea',
-      'weight' => 25,
-      'settings' => array(
-        'rows' => 4,
-      ),
-    ));
+      ->setDisplayOptions('form', [
+        'type' => 'string_textarea',
+        'weight' => 25,
+        'settings' => [
+          'rows' => 4,
+        ],
+      ]);
 
     return $fields;
   }
@@ -72,7 +72,9 @@ function user_revision_entity_base_field_info(EntityTypeInterface $entity_type) 
  */
 function user_revision_entity_base_field_info_alter(&$fields, EntityTypeInterface $entity_type) {
   if ($entity_type->id() == 'user') {
-    $unused_fields = array('uid', 'uuid', 'init', 'created', 'changed', 'access', 'login', 'vid');
+    $unused_fields = ['uid', 'uuid', 'init', 'created', 'changed',
+      'access', 'login', 'vid',
+    ];
     foreach ($fields as $field_name => $field) {
       if (array_search($field_name, $unused_fields) === FALSE) {
         $field->setRevisionable(TRUE);
@@ -97,7 +99,7 @@ function user_revision_user_presave(UserInterface $user) {
     $user->revision_log = $user->original->revision_log->value;
   }
 
-  // Check revision timestamp
+  // Check revision timestamp.
   if (!$user->get('revision_timestamp')->getValue()) {
     $user->set('revision_timestamp', time());
   }
@@ -115,7 +117,7 @@ function user_revision_user_prepare_form(UserInterface $user, $operation, FormSt
 
 /**
  * Implements hook_form_BASE_FORM_ID_alter() for user_form.
- * 
+ *
  * @see user_revision_form_user_form_builder()
  */
 function user_revision_form_user_form_alter(&$form, FormStateInterface $form_state, $form_id) {
@@ -130,53 +132,57 @@ function user_revision_form_user_form_alter(&$form, FormStateInterface $form_sta
     return;
   }
 
-  $form['revision'] = array(
+  $form['revision'] = [
     '#type' => 'checkbox',
     '#title' => t('Create new revision'),
     '#default_value' => $config->get('user_revision_default_enabled') ||
-      $config->get('user_revision_always_enabled'),
+    $config->get('user_revision_always_enabled'),
     '#access' => \Drupal::currentUser()->hasPermission('administer users') &&
-      !$config->get('user_revision_always_enabled'),
+    !$config->get('user_revision_always_enabled'),
     '#group' => 'revision_information',
-  );
+  ];
 
   if (!\Drupal::currentUser()->hasPermission('administer users') &&
-	(!$form['revision']['#default_value'] ||
-	 !$config->get('user_revision_user_log_enabled')
-	)
+  (!$form['revision']['#default_value'] ||
+     !$config->get('user_revision_user_log_enabled')
+  )
      ) {
-    //Don't include the revision_log field if user is non-privileged, and the module
-    //is configured either not to create new revisions by default,
-    //or not to allow ordinary users to enter revision log messages.
+    // Don't include the revision_log field if user is non-privileged,
+    // and the module
+    // is configured either not to create new revisions by default,
+    // or not to allow ordinary users to enter revision log messages.
     unset($form['revision_log']);
-  } else {
-    // Add a revision_information group to contain the "Create new revision" checkbox
-    // and the "Revision log message" text box - but only if at least one of these
+  }
+  else {
+    // Add a revision_information group to contain the "Create new revision"
+    // checkbox
+    // and the "Revision log message" text box - but only if at
+    // least one of these
     // needs to be displayed.
-
-    $form['revision_information'] = array(
+    $form['revision_information'] = [
       '#type' => 'details',
       '#title' => t('Revision information'),
       '#open' => $config->get('user_revision_default_open'),
-      '#attributes' => array(
-        'class' => array('user-form-revision-information'),
-      ),
+      '#attributes' => [
+        'class' => ['user-form-revision-information'],
+      ],
       '#weight' => 20,
       '#optional' => TRUE,
-    );
+    ];
 
-    //Only display the revision_log text box if the "Create new revision" option is checked
-    $form['revision_log'] += array(
-      '#states' => array(
-        'visible' => array(
-          ':input[name="revision"]' => array('checked' => TRUE),
-        ),
-      ),
-      '#group' => 'revision_information'
-    );
+    // Only display the revision_log text box if the "Create new revision"
+    // option is checked.
+    $form['revision_log'] += [
+      '#states' => [
+        'visible' => [
+          ':input[name="revision"]' => ['checked' => TRUE],
+        ],
+      ],
+      '#group' => 'revision_information',
+    ];
   }
 
-  // Define entity builder
+  // Define entity builder.
   $form['#entity_builders'][] = 'user_revision_form_user_form_builder';
 }
 
@@ -184,7 +190,7 @@ function user_revision_form_user_form_alter(&$form, FormStateInterface $form_sta
  * Implements hook_form_FORM_ID_alter() for user_register_form.
  */
 function user_revision_form_user_register_form_alter(&$form, FormStateInterface $form_state, $form_id) {
-  // Remove revision log from register form for anonymous users
+  // Remove revision log from register form for anonymous users.
   if (\Drupal::currentUser()->isAnonymous()) {
     unset($form['revision_log']);
   }
@@ -192,7 +198,7 @@ function user_revision_form_user_register_form_alter(&$form, FormStateInterface 
 
 /**
  * Entity form builder for user_form.
- * 
+ *
  * @see user_revision_form_user_form_alter()
  */
 function user_revision_form_user_form_builder($entity_type, UserInterface $user, &$form, FormStateInterface $form_state) {
@@ -210,51 +216,51 @@ function user_revision_form_user_form_builder($entity_type, UserInterface $user,
 
 /**
  * Implements hook_form_BASE_FORM_ID_alter() for user_admin_settings.
- * 
+ *
  * @see user_revision_form_user_admin_settings_submit()
  */
 function user_revision_form_user_admin_settings_alter(&$form, FormStateInterface $form_state, $form_id) {
   $config = \Drupal::config('user_revision.settings');
 
-  $form['revision'] = array(
+  $form['revision'] = [
     '#type' => 'details',
     '#title' => t('Revision information'),
     '#open' => TRUE,
-    '#weight' => 0
-  );
+    '#weight' => 0,
+  ];
 
-  $form['revision']['revision_default_open'] = array(
+  $form['revision']['revision_default_open'] = [
     '#type' => 'checkbox',
     '#title' => t('Display revision information group initially open'),
     '#default_value' => $config->get('user_revision_default_open'),
-  );
+  ];
 
-  $form['revision']['revision_status'] = array(
+  $form['revision']['revision_status'] = [
     '#type' => 'checkbox',
     '#title' => t('Always create new revision'),
-    '#default_value' => $config->get('user_revision_always_enabled')
-  );
+    '#default_value' => $config->get('user_revision_always_enabled'),
+  ];
 
-  $form['revision']['revision_default_status'] = array(
+  $form['revision']['revision_default_status'] = [
     '#type' => 'checkbox',
     '#title' => t('Create new revision by default'),
     '#default_value' => $config->get('user_revision_default_enabled'),
-    '#states' => array(
-      'disabled' => array(':input[name="revision_status"]' => array('checked' => TRUE)),
-    )
-  );
+    '#states' => [
+      'disabled' => [':input[name="revision_status"]' => ['checked' => TRUE]],
+    ],
+  ];
 
-  $form['revision']['revision_user_log_status'] = array(
+  $form['revision']['revision_user_log_status'] = [
     '#type' => 'checkbox',
     '#title' => t('Allow ordinary users to enter revision log messages'),
     '#default_value' => $config->get('user_revision_user_log_enabled'),
-    '#states' => array(
-      'disabled' => array(
-          ':input[name="revision_status"]' => array('checked' => FALSE),
-          ':input[name="revision_default_status"]' => array('checked' => FALSE)
-       ),
-    )
-  );
+    '#states' => [
+      'disabled' => [
+        ':input[name="revision_status"]' => ['checked' => FALSE],
+        ':input[name="revision_default_status"]' => ['checked' => FALSE],
+      ],
+    ],
+  ];
 
   // Add submit handler to save revision configuration.
   $form['#submit'][] = 'user_revision_form_user_admin_settings_submit';
@@ -277,10 +283,11 @@ function user_revision_form_user_admin_settings_submit($form, FormStateInterface
 /**
  * Internal functions.
  */
+
 /**
  * Returns a list of user revision IDs for a specific user.
  *
- * @param \Drupal\user\UserInterface
+ * @param \Drupal\user\UserInterface $user
  *   The user entity.
  *
  * @return int[]
@@ -288,13 +295,13 @@ function user_revision_form_user_admin_settings_submit($form, FormStateInterface
  */
 function user_revision_ids(UserInterface $user) {
   $entity_type = \Drupal::service('entity_type.manager')->getStorage('user')->getEntityType();
-  return \Drupal::database()->query('SELECT vid FROM {' . $entity_type->getRevisionTable() . '} WHERE uid=:uid ORDER BY vid', array(':uid' => $user->id()))->fetchCol();
+  return \Drupal::database()->query('SELECT vid FROM {' . $entity_type->getRevisionTable() . '} WHERE uid=:uid ORDER BY vid', [':uid' => $user->id()])->fetchCol();
 }
 
 /**
  * Returns a count of user revisions for a specific user.
  *
- * @param \Drupal\user\UserInterface
+ * @param \Drupal\user\UserInterface $user
  *   The user entity.
  *
  * @return int
@@ -302,20 +309,20 @@ function user_revision_ids(UserInterface $user) {
  */
 function user_revision_count(UserInterface $user) {
   $entity_type = \Drupal::service('entity_type.manager')->getStorage('user')->getEntityType();
-  return \Drupal::database()->query('SELECT COUNT(DISTINCT vid) FROM {' . $entity_type->getRevisionTable() . '} WHERE uid=:uid', array(':uid' => $user->id()))->fetchField();
+  return \Drupal::database()->query('SELECT COUNT(DISTINCT vid) FROM {' . $entity_type->getRevisionTable() . '} WHERE uid=:uid', [':uid' => $user->id()])->fetchField();
 }
 
 /**
  * Implements hook_entity_operation() for user entities.
  */
 function user_revision_entity_operation(EntityInterface $entity) {
-  $operations = array();
+  $operations = [];
   if ($entity->getEntityTypeId() == 'user') {
-    $operations['revisions'] = array(
+    $operations['revisions'] = [
       'title' => t('Revisions'),
-      'url' => Url::fromRoute('entity.user.version_history', array('user' => $entity->id())),
-      'weight' => 50
-    );
+      'url' => Url::fromRoute('entity.user.version_history', ['user' => $entity->id()]),
+      'weight' => 50,
+    ];
   }
   return $operations;
 }

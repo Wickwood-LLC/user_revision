@@ -1,0 +1,16 @@
+{
+  "name": "drupal/user_revision",
+  "description": "Provides revision support for users.",
+  "type": "drupal-module",
+  "homepage": "https://www.drupal.org/project/user_revision",
+  "authors": [
+    {
+      "name": "See contributors",
+      "homepage": "https://www.drupal.org/node/1051280/committers"
+    }
+  ],
+  "support": {
+    "issues": "https://www.drupal.org/project/issues/user_revision"
+  },
+  "license": "GPL-2.0+"
+}
