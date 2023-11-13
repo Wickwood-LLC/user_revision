@@ -326,3 +326,12 @@ function user_revision_entity_operation(EntityInterface $entity) {
   }
   return $operations;
 }
+
+/**
+ * Implements hook_migration_plugins_alter().
+ */
+function user_revision_migration_plugins_alter(array &$migrations) {
+  if (isset($migrations['d7_user'])) {
+    $migrations['d7_user']['process']['vid'] = 'vid';
+  }
+}

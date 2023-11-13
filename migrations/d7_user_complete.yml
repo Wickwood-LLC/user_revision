@@ -1,0 +1,69 @@
+# Migrates all revisions and all revision translations.
+id: d7_user_complete
+label: User complete
+audit: true
+migration_tags:
+  - Drupal 7
+  - User
+# class: Drupal\node\Plugin\migrate\D7NodeTranslation
+# deriver: Drupal\node\Plugin\migrate\D7NodeDeriver
+source:
+  plugin: d7_user_complete
+process:
+  uid: uid
+  vid: vid
+  # langcode:
+  #   plugin: default_value
+  #   source: language
+  #   default_value: "und"
+  name: name
+  pass: pass
+  mail: mail
+  created: created
+  # access: access
+  login: login
+  status: status
+  timezone: timezone
+  changed: timestamp
+  # promote: promote
+  # sticky: sticky
+  revision_uid: authorid
+  revision_log: log
+  revision_timestamp: timestamp
+  langcode:
+    plugin: user_langcode
+    source: entity_language
+    fallback_to_site_default: false
+  preferred_langcode:
+    plugin: user_langcode
+    source: language
+    fallback_to_site_default: true
+  preferred_admin_langcode:
+    plugin: user_langcode
+    source: language
+    fallback_to_site_default: true
+  init: init
+  roles:
+    plugin: migration_lookup
+    migration: d7_user_role
+    source: roles
+  user_picture:
+    -
+      plugin: default_value
+      source: picture
+      default_value: null
+    -
+      plugin: migration_lookup
+      migration: d7_file
+  #  unmapped d6 fields.
+  #  translate
+  #  comment
+destination:
+  plugin: user_complete:user
+  translations: false
+migration_dependencies:
+  required:
+    - d7_user
+    - language
+  optional:
+    - d7_field_instance

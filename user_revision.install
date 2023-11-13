@@ -20,7 +20,8 @@ function user_revision_module_preinstall($module) {
     /* @var $user_storage \Drupal\Core\Entity\Sql\SqlContentEntityStorage */
     $entity_type_manager = \Drupal::service('entity_type.manager');
     $user_storage = $entity_type_manager->getStorage('user');
-    $entity_type_manager->onEntityTypeDelete($user_storage->getEntityType());
+    // $entity_type_manager->onEntityTypeDelete($user_storage->getEntityType());
+    \Drupal::service('entity_type.listener')->onEntityTypeDelete($user_storage->getEntityType());
   }
 }
 
@@ -31,12 +32,19 @@ function user_revision_install() {
   /* @var $user_storage \Drupal\Core\Entity\Sql\SqlContentEntityStorage */
   $entity_type_manager = \Drupal::service('entity_type.manager');
   $user_storage = $entity_type_manager->getStorage('user');
-  $entity_type_manager->onEntityTypeCreate($user_storage->getEntityType());
+  \Drupal::service('entity_type.listener')->onEntityTypeCreate($user_storage->getEntityType());
 
   $all_users = &drupal_static('user_revision_all_users', array());
   foreach ($all_users as $id => $user) {
     $user_entity = User::create($user);
     $user_entity->set('revision_uid', $id);
+    // UserStorage::doSaveFieldItems() uses identical operator to match uid as 0 to suppress
+    // auto increment value generation. Thus, uid needs to be an integer value.
+    $user_entity->set('uid', (int) $id);
+    if ($id === 0) {
+      // We need to manually set vid as 0 for anonymous users.
+      $user_entity->set('vid', 0);
+    }
     $user_entity->save();
   }
   drupal_static_reset('user_revision_all_users');
@@ -48,10 +56,10 @@ function user_revision_install() {
 function user_revision_entity_presave(EntityInterface $entity) {
   if ($entity->getEntityTypeId() == 'user') {
     $all_users = &drupal_static('user_revision_all_users', array());
-    if (isset($all_users[$entity->id()]) && isset($all_users[$entity->id()]['pass'])) {
+    if (isset($all_users[$entity->id()]) && !empty($all_users[$entity->id()]['pass'])) {
       $entity->set('pass', current($all_users[$entity->id()]['pass'])['value']);
     }
-    if (isset($all_users[$entity->id()]) && isset($all_users[$entity->id()]['changed'])) {
+    if (isset($all_users[$entity->id()]) && !empty($all_users[$entity->id()]['changed'])) {
       $entity->set('changed', current($all_users[$entity->id()]['changed'])['value']);
     }
   }
