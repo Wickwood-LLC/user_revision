@@ -6,7 +6,7 @@ migration_tags:
   - Drupal 7
   - User
 # class: Drupal\node\Plugin\migrate\D7NodeTranslation
-# deriver: Drupal\node\Plugin\migrate\D7NodeDeriver
+deriver: Drupal\user_revision\Plugin\migrate\D7UserDeriver
 source:
   plugin: d7_user_complete
 process:
